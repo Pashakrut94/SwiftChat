@@ -6,13 +6,7 @@ import (
 	"strconv"
 )
 
-var count int
 var messages []Message
-
-func Counter(w http.ResponseWriter, r *http.Request) {
-	count++
-	fmt.Fprintf(w, "%d", count)
-}
 
 type Message struct {
 	Receiver string
@@ -26,9 +20,11 @@ func MakeMessage(w http.ResponseWriter, r *http.Request) {
 	msg := Message{Receiver: receiver, Text: text}
 	messages = append(messages, msg)
 }
-
 func main() {
+<<<<<<< HEAD
 	http.HandleFunc("/Counter", Counter)
+=======
+>>>>>>> AutoMessage
 
 	http.HandleFunc("/MakeMessage", MakeMessage)
 	http.HandleFunc("/PrintMessage", PrintMessage)
@@ -37,7 +33,10 @@ func main() {
 	fmt.Println("Server starts at :8080")
 	http.ListenAndServe(":8080", nil)
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> AutoMessage
 func PrintMessage(w http.ResponseWriter, r *http.Request) {
 	receiver := r.URL.Query().Get("receiver")
 	for _, msg := range messages {
@@ -47,7 +46,6 @@ func PrintMessage(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Message \"%s\" sent to  %s\n", msg.Text, msg.Receiver)
 	}
 }
-
 func AutoMessage(w http.ResponseWriter, r *http.Request) {
 	// localhost:8080/AutoMessage?text=Privet&receiver=Pasha&quantity=5
 	quantity, err := strconv.Atoi(r.URL.Query().Get("quantity"))
@@ -63,3 +61,5 @@ func AutoMessage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+// Testing git checkout
