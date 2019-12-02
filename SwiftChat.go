@@ -23,14 +23,12 @@ func MakeMessage(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Create new message")
 	text := r.URL.Query().Get("text")
 	receiver := r.URL.Query().Get("receiver")
-
 	msg := Message{Receiver: receiver, Text: text}
 	messages = append(messages, msg)
-
 }
 
 func main() {
-	http.HandleFunc("/Counter", Counter) //endPoint
+	http.HandleFunc("/Counter", Counter)
 
 	http.HandleFunc("/MakeMessage", MakeMessage)
 	http.HandleFunc("/PrintMessage", PrintMessage)
@@ -39,8 +37,6 @@ func main() {
 	fmt.Println("Server starts at :8080")
 	http.ListenAndServe(":8080", nil)
 }
-
-// MakeMessage?text=Privet&receiver=Pasha
 
 func PrintMessage(w http.ResponseWriter, r *http.Request) {
 	receiver := r.URL.Query().Get("receiver")
