@@ -21,10 +21,6 @@ func MakeMessage(w http.ResponseWriter, r *http.Request) {
 	messages = append(messages, msg)
 }
 func main() {
-<<<<<<< HEAD
-	http.HandleFunc("/Counter", Counter)
-=======
->>>>>>> AutoMessage
 
 	http.HandleFunc("/MakeMessage", MakeMessage)
 	http.HandleFunc("/PrintMessage", PrintMessage)
@@ -33,10 +29,6 @@ func main() {
 	fmt.Println("Server starts at :8080")
 	http.ListenAndServe(":8080", nil)
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> AutoMessage
 func PrintMessage(w http.ResponseWriter, r *http.Request) {
 	receiver := r.URL.Query().Get("receiver")
 	for _, msg := range messages {
@@ -62,4 +54,4 @@ func AutoMessage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Testing git checkout
+// Branch testing get a comment
