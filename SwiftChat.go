@@ -49,6 +49,7 @@ func AutoMessage(w http.ResponseWriter, r *http.Request) {
 		msg := Message{Receiver: receiver, Text: text}
 		fmt.Fprintf(w, "Message is \"%s\", receiver is \"%s\", quantity of repeated messages is %d", text, receiver, quantity)
 		for i := 0; i < quantity; i++ {
+			// Add to messages.
 			messages = append(messages, msg)
 		}
 	}
