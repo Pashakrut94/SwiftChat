@@ -38,8 +38,6 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
-//2 ендпоинта : один печатает mesgs, второй принимает mesgs
-// mesgs будет как параметр с полями: (кому и текст)
 // MakeMessage?text=Privet&receiver=Pasha
 
 func PrintMessage(w http.ResponseWriter, r *http.Request) {
@@ -52,5 +50,5 @@ func PrintMessage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// FastChat repositorii chat pod moim imenem, dobavit Ilya, vilozhit tyda pull-request, zapushit tuda
+// pull-request
 // залить свой код на репозиторий, гит комит, гит пул
