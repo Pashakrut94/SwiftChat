@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    text TEXT,
+    room_id INTEGER REFERENCES rooms (id), 
+    user_id INTEGER REFERENCES users (id)
+)
