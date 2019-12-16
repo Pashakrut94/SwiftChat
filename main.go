@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"net/http"
 
@@ -12,10 +13,19 @@ import (
 	"github.com/Pashakrut94/SwiftChat/users"
 )
 
-func main() {
+var (
+	 pgUser = flag.String("pg_user", "Pasha","PostgreSQL name")
+	 pgPwd = flag.String("pg_pwd", "pwd0123456789","PostgreSQL password")
+	 pgHost = flag.String("pg_host","localhost","PostgreSQL host")	 
+	 pgPort = flag.String("pg_port", "54320","PostgreSQL port")
+	 pgDBname = flag.String("pg_dbname","mydb","PostgreSQL name of DB")
+)
 
-	connStr := "postgresql://Pasha:pwd0123456789@localhost:54320/mydb?sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
+func main() {
+	flag.Parse()
+	connectionString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable",*pgUser, *pgPwd, *pgHost, *pgPort, *pgDBname)
+
+	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
 		panic(err)
 	}
