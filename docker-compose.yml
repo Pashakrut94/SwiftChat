@@ -18,8 +18,4 @@ services:
 #   I used the name postgres-data but you can changed it to something else.
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
-
-
-
-
-# docker run -v /home/pavel/Documents/SwiftChat/migrations:/migrations --network host migrate/migrate create -dir=/migrations/ -ext=sql -seq create_user_table
+      

@@ -5,11 +5,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	_ "github.com/lib/pq"
-	"github.com/gorilla/mux"
-	"github.com/Pashakrut94/SwiftChat/handlers"
-)
 
+	"github.com/Pashakrut94/SwiftChat/auth"
+	"github.com/Pashakrut94/SwiftChat/handlers"
+	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
+)
 
 func CreateRoom(repo RoomRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -80,12 +81,13 @@ func GetRoom(repo RoomRepo) http.HandlerFunc {
 }
 
 type CreateMessageRequest struct {
-	Text   string `json:"text"`
-	UserID int    `json:"user_id"`
+	Text string `json:"text"`
 }
 
 func CreateMessage(repo MsgRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		session := auth.SessionValue(ctx)
 		vars := mux.Vars(r)
 		roomID, err := strconv.Atoi(vars["RoomID"])
 		if err != nil {
@@ -105,7 +107,7 @@ func CreateMessage(repo MsgRepo) http.HandlerFunc {
 				http.StatusInternalServerError)
 			return
 		}
-		msg := Message{Text: req.Text, UserID: req.UserID, RoomID: roomID}
+		msg := Message{Text: req.Text, UserID: session.UserID, RoomID: roomID}
 		if err := repo.Create(&msg); err != nil {
 			http.Error(w, "HTTP 400 Bad Request",
 				http.StatusBadRequest)

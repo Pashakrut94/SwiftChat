@@ -2,13 +2,15 @@ package users
 
 import (
 	"net/http"
+
 	_ "github.com/lib/pq"
 
-	"github.com/gorilla/mux"
-	"strconv"
 	"encoding/json"
 	"io/ioutil"
+	"strconv"
+
 	"github.com/Pashakrut94/SwiftChat/handlers"
+	"github.com/gorilla/mux"
 )
 
 func CreateUsers(repo UserRepo) http.HandlerFunc {
