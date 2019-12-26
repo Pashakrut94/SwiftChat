@@ -9,7 +9,7 @@ import (
 	"github.com/Pashakrut94/SwiftChat/auth"
 	"github.com/Pashakrut94/SwiftChat/handlers"
 	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" //kak etot import na chtoto vliyaet wtf !!!!!??????
 )
 
 func CreateRoom(repo RoomRepo) http.HandlerFunc {
@@ -40,17 +40,10 @@ func ListRooms(repo RoomRepo) http.HandlerFunc {
 		_, pretty := r.URL.Query()["pretty"]
 		rooms, err := repo.List()
 		if err != nil {
-			http.Error(w, "Error listing of rooms",
-				http.StatusInternalServerError)
+			handlers.HandleResponseError(w, "Error listing of rooms", http.StatusNotFound)
 			return
 		}
-		data, err := handlers.FormatResp(rooms, pretty)
-		if err != nil {
-			http.Error(w, "Error converting results to json",
-				http.StatusInternalServerError)
-			return
-		}
-		w.Write(data)
+		handlers.HandleResponse(w, rooms, pretty)
 	}
 }
 

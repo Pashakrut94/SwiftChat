@@ -17,6 +17,7 @@ type SignUpRequest struct {
 }
 
 func SignUp(userRepo users.UserRepo, sessRepo SessionRepo) http.HandlerFunc {
+	// Http statuses
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, err := r.Cookie(sessionName)
 		if err == nil {
@@ -60,7 +61,7 @@ func SignUp(userRepo users.UserRepo, sessRepo SessionRepo) http.HandlerFunc {
 			return
 		}
 		user := users.User{Name: req.Username, Phone: req.Phone, Password: string(hashedPassword)}
-		if err := userRepo.Create(&user); err != nil {
+		if err := userRepo.Create(&user); err != nil { // why pointer
 			http.Error(w, "Server error, unable to create your account.", 500)
 			return
 		}

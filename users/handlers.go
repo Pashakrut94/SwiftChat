@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func CreateUsers(repo UserRepo) http.HandlerFunc {
+func CreateUser(repo UserRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -31,6 +31,7 @@ func CreateUsers(repo UserRepo) http.HandlerFunc {
 			http.Error(w, "HTTP 400 Bad Request",
 				http.StatusBadRequest)
 		}
+		// return user full info (struct)
 		w.Write([]byte(strconv.Itoa(user.ID)))
 	}
 }
