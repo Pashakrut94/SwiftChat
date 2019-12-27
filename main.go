@@ -31,8 +31,8 @@ func main() {
 	}
 	defer db.Close()
 
-	userRepo := users.NewUserRepo(db)
 	roomRepo := chat.NewRoomRepo(db)
+	userRepo := users.NewUserRepo(db)
 	msgRepo := chat.NewMsgRepo(db)
 	sessRepo := auth.NewSessionRepo(db)
 	authMiddleware := auth.RequireAuthentication(*sessRepo)
@@ -47,7 +47,7 @@ func main() {
 	router.Handle("/api/rooms", authMiddleware(chat.ListRooms(*roomRepo))).Methods("GET")
 	router.Handle("/api/rooms/{RoomID:[0-9]+}", authMiddleware(chat.GetRoom(*roomRepo))).Methods("GET")
 
-	router.Handle("/api/users", authMiddleware(users.CreateUsers(*userRepo))).Methods("POST")
+	router.Handle("/api/users", authMiddleware(users.CreateUser(*userRepo))).Methods("POST")
 	router.Handle("/api/users", authMiddleware(users.ListUsers(*userRepo))).Methods("GET")
 	router.Handle("/api/users/{UserID:[0-9]+}", authMiddleware(users.GetUser(*userRepo))).Methods("GET")
 
