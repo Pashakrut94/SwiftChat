@@ -9,29 +9,27 @@ import (
 	"github.com/Pashakrut94/SwiftChat/auth"
 	"github.com/Pashakrut94/SwiftChat/handlers"
 	"github.com/gorilla/mux"
-	_ "github.com/lib/pq" //kak etot import na chtoto vliyaet wtf !!!!!??????
+	_ "github.com/lib/pq"
 )
 
 func CreateRoom(repo RoomRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		_, pretty := r.URL.Query()["pretty"]
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			http.Error(w, "Error reading request body",
-				http.StatusInternalServerError)
+			handlers.HandleResponseError(w, "Error reading request body", http.StatusInternalServerError)
 			return
 		}
 		var room Room
 		if err := json.Unmarshal(body, &room); err != nil {
-			http.Error(w, "Error unmarshaling request body",
-				http.StatusInternalServerError)
+			handlers.HandleResponseError(w, "Error unmarshaling request body", http.StatusInternalServerError)
 			return
 		}
 		if err := repo.Create(&room); err != nil {
-			http.Error(w, "HTTP 400 Bad Request",
-				http.StatusBadRequest)
+			handlers.HandleResponseError(w, "HTTP 400 Bad Request", http.StatusBadRequest)
 			return
 		}
-		w.Write([]byte(strconv.Itoa(room.ID)))
+		handlers.HandleResponse(w, room, pretty)
 	}
 }
 
@@ -52,24 +50,16 @@ func GetRoom(repo RoomRepo) http.HandlerFunc {
 		vars := mux.Vars(r)
 		roomID, err := strconv.Atoi(vars["RoomID"])
 		if err != nil {
-			http.Error(w, "Incorrect enter of RoomID",
-				http.StatusBadRequest)
+			handlers.HandleResponseError(w, "Incorrect enter of RoomID", http.StatusBadRequest)
 			return
 		}
 		room, err := repo.Get(roomID)
 		if err != nil {
-			http.Error(w, "Error getting room by ID",
-				http.StatusBadRequest)
+			handlers.HandleResponseError(w, "Error getting room by ID", http.StatusBadRequest)
 			return
 		}
 		_, pretty := r.URL.Query()["pretty"]
-		data, err := handlers.FormatResp(room, pretty)
-		if err != nil {
-			http.Error(w, "Error converting results to json",
-				http.StatusInternalServerError)
-			return
-		}
-		w.Write(data)
+		handlers.HandleResponse(w, room, pretty)
 	}
 }
 
@@ -84,29 +74,26 @@ func CreateMessage(repo MsgRepo) http.HandlerFunc {
 		vars := mux.Vars(r)
 		roomID, err := strconv.Atoi(vars["RoomID"])
 		if err != nil {
-			http.Error(w, "Incorrect enter of RoomID",
-				http.StatusBadRequest)
+			handlers.HandleResponseError(w, "Incorrect enter of RoomID", http.StatusBadRequest)
 			return
 		}
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			http.Error(w, "Error reading request body",
-				http.StatusInternalServerError)
+			handlers.HandleResponseError(w, "Error reading request body", http.StatusInternalServerError)
 			return
 		}
 		var req CreateMessageRequest
 		if err := json.Unmarshal(body, &req); err != nil {
-			http.Error(w, "Error unmarshaling request body",
-				http.StatusInternalServerError)
+			handlers.HandleResponseError(w, "Error unmarshaling request body", http.StatusInternalServerError)
 			return
 		}
 		msg := Message{Text: req.Text, UserID: session.UserID, RoomID: roomID}
 		if err := repo.Create(&msg); err != nil {
-			http.Error(w, "HTTP 400 Bad Request",
-				http.StatusBadRequest)
+			handlers.HandleResponseError(w, "Error creating message", http.StatusBadRequest)
 			return
 		}
-		w.Write([]byte(strconv.Itoa(msg.ID)))
+		_, pretty := r.URL.Query()["pretty"]
+		handlers.HandleResponse(w, msg, pretty)
 	}
 }
 
@@ -115,23 +102,15 @@ func ListMessages(repo MsgRepo) http.HandlerFunc {
 		vars := mux.Vars(r)
 		roomID, err := strconv.Atoi(vars["RoomID"])
 		if err != nil {
-			http.Error(w, "Incorrect enter of RoomID",
-				http.StatusBadRequest)
+			handlers.HandleResponseError(w, "Incorrect enter of RoomID", http.StatusBadRequest)
 			return
 		}
 		msg, err := repo.ListByRoomID(roomID)
 		if err != nil {
-			http.Error(w, "Error getting messages by roomID",
-				http.StatusBadRequest)
+			handlers.HandleResponseError(w, "Error getting messages by roomID", http.StatusBadRequest)
 			return
 		}
 		_, pretty := r.URL.Query()["pretty"]
-		data, err := handlers.FormatResp(msg, pretty)
-		if err != nil {
-			http.Error(w, "Error converting results to json",
-				http.StatusInternalServerError)
-			return
-		}
-		w.Write(data)
+		handlers.HandleResponse(w, msg, pretty)
 	}
 }

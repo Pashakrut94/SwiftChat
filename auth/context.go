@@ -7,7 +7,6 @@ import (
 const key = "session"
 
 func WithSession(parent context.Context, sess *Session) context.Context {
-	// kak rabotaet withValue?
 	return context.WithValue(parent, key, sess)
 }
 

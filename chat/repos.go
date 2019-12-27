@@ -34,7 +34,6 @@ func (repo *MsgRepo) ListByRoomID(roomID int) ([]Message, error) {
 		var msg Message
 		err := rows.Scan(&msg.ID, &msg.Text, &msg.UserID, &msg.RoomID)
 		if err != nil {
-			fmt.Println(err)
 			continue
 		}
 		if msg.RoomID == roomID {

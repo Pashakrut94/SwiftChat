@@ -30,7 +30,6 @@ func HandleResponse(w http.ResponseWriter, payload interface{}, pretty bool) {
 		http.Error(w, "Error writing data", http.StatusInternalServerError)
 		return
 	}
-
 }
 
 func HandleResponseError(w http.ResponseWriter, msg string, statusCode int) {
@@ -46,11 +45,4 @@ func HandleResponseError(w http.ResponseWriter, msg string, statusCode int) {
 		http.Error(w, "Error writing data", http.StatusInternalServerError)
 		return
 	}
-}
-
-func FormatResp(payload interface{}, pretty bool) ([]byte, error) {
-	if pretty {
-		return json.MarshalIndent(payload, "", " ")
-	}
-	return json.Marshal(payload)
 }
