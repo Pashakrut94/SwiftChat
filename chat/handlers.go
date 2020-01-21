@@ -2,7 +2,6 @@ package chat
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -10,24 +9,28 @@ import (
 	"github.com/Pashakrut94/SwiftChat/handlers"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 )
 
+//уникальное имя, добавь кейс в ошибках для этого, добавь ошибку в этом пакете отдельную и обрабатывай через нее
 func CreateRoom(repo RoomRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, pretty := r.URL.Query()["pretty"]
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			handlers.HandleResponseError(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		}
 		var room Room
-		if err := json.Unmarshal(body, &room); err != nil {
-			handlers.HandleResponseError(w, "Error unmarshaling request body", http.StatusInternalServerError)
+		if err := json.NewDecoder(r.Body).Decode(&room); err != nil {
+			handlers.HandleResponseError(w, errors.Wrap(err, "error parsing signup request").Error(), http.StatusBadRequest)
 			return
 		}
-		if err := repo.Create(&room); err != nil {
-			handlers.HandleResponseError(w, "HTTP 400 Bad Request", http.StatusBadRequest)
-			return
+		room, err := HandleCreateRoom(repo, room)
+		if err != nil {
+			switch errors.Cause(err) {
+			case ErrRoomAlreadyExists:
+				handlers.HandleResponseError(w, errors.Wrap(err, "room already exists").Error(), http.StatusBadRequest)
+				return
+			default:
+				handlers.HandleResponseError(w, errors.Wrap(err, "error creating room").Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 		handlers.HandleResponse(w, room, pretty)
 	}
@@ -36,9 +39,9 @@ func CreateRoom(repo RoomRepo) http.HandlerFunc {
 func ListRooms(repo RoomRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, pretty := r.URL.Query()["pretty"]
-		rooms, err := repo.List()
+		rooms, err := HandleListRooms(repo)
 		if err != nil {
-			handlers.HandleResponseError(w, "Error listing of rooms", http.StatusNotFound)
+			handlers.HandleResponseError(w, errors.Wrap(err, "error listing of rooms").Error(), http.StatusInternalServerError)
 			return
 		}
 		handlers.HandleResponse(w, rooms, pretty)
@@ -47,16 +50,22 @@ func ListRooms(repo RoomRepo) http.HandlerFunc {
 
 func GetRoom(repo RoomRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		roomID, err := strconv.Atoi(vars["RoomID"])
+		variables := mux.Vars(r)
+		roomID, err := strconv.Atoi(variables["RoomID"])
 		if err != nil {
-			handlers.HandleResponseError(w, "Incorrect enter of RoomID", http.StatusBadRequest)
+			handlers.HandleResponseError(w, errors.Wrap(err, "incorrect enter of RoomID").Error(), http.StatusBadRequest)
 			return
 		}
-		room, err := repo.Get(roomID)
+		room, err := HandleGetRoom(repo, roomID)
 		if err != nil {
-			handlers.HandleResponseError(w, "Error getting room by ID", http.StatusBadRequest)
-			return
+			switch errors.Cause(err) {
+			case ErrNotFound:
+				handlers.HandleResponseError(w, errors.Wrap(err, err.Error()).Error(), http.StatusNotFound)
+				return
+			default:
+				handlers.HandleResponseError(w, errors.Wrap(err, "error no rows").Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 		_, pretty := r.URL.Query()["pretty"]
 		handlers.HandleResponse(w, room, pretty)
@@ -71,25 +80,20 @@ func CreateMessage(repo MsgRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		session := auth.SessionValue(ctx)
-		vars := mux.Vars(r)
-		roomID, err := strconv.Atoi(vars["RoomID"])
+		variables := mux.Vars(r)
+		roomID, err := strconv.Atoi(variables["RoomID"])
 		if err != nil {
-			handlers.HandleResponseError(w, "Incorrect enter of RoomID", http.StatusBadRequest)
-			return
-		}
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			handlers.HandleResponseError(w, "Error reading request body", http.StatusInternalServerError)
+			handlers.HandleResponseError(w, errors.Wrap(err, "incorrect enter of RoomID").Error(), http.StatusBadRequest)
 			return
 		}
 		var req CreateMessageRequest
-		if err := json.Unmarshal(body, &req); err != nil {
-			handlers.HandleResponseError(w, "Error unmarshaling request body", http.StatusInternalServerError)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			handlers.HandleResponseError(w, errors.Wrap(err, "error parsing signup request").Error(), http.StatusBadRequest)
 			return
 		}
-		msg := Message{Text: req.Text, UserID: session.UserID, RoomID: roomID}
-		if err := repo.Create(&msg); err != nil {
-			handlers.HandleResponseError(w, "Error creating message", http.StatusBadRequest)
+		msg, err := HandleCreateMessage(repo, req.Text, session.UserID, roomID)
+		if err != nil {
+			handlers.HandleResponseError(w, errors.Wrap(err, err.Error()).Error(), http.StatusInternalServerError)
 			return
 		}
 		_, pretty := r.URL.Query()["pretty"]
@@ -102,15 +106,15 @@ func ListMessages(repo MsgRepo) http.HandlerFunc {
 		vars := mux.Vars(r)
 		roomID, err := strconv.Atoi(vars["RoomID"])
 		if err != nil {
-			handlers.HandleResponseError(w, "Incorrect enter of RoomID", http.StatusBadRequest)
+			handlers.HandleResponseError(w, errors.Wrap(err, "incorrect enter of RoomID").Error(), http.StatusBadRequest)
 			return
 		}
-		msg, err := repo.ListByRoomID(roomID)
+		msgs, err := HandleListMessages(repo, roomID)
 		if err != nil {
-			handlers.HandleResponseError(w, "Error getting messages by roomID", http.StatusBadRequest)
+			handlers.HandleResponseError(w, errors.Wrap(err, "error getting messages").Error(), http.StatusBadRequest)
 			return
 		}
 		_, pretty := r.URL.Query()["pretty"]
-		handlers.HandleResponse(w, msg, pretty)
+		handlers.HandleResponse(w, msgs, pretty)
 	}
 }

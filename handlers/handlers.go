@@ -3,6 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 type FormatResponse struct {
@@ -22,12 +24,12 @@ func HandleResponse(w http.ResponseWriter, payload interface{}, pretty bool) {
 		data, err = json.Marshal(&c)
 	}
 	if err != nil {
-		http.Error(w, "Error marshaling response", http.StatusInternalServerError)
+		http.Error(w, errors.Wrap(err, "error marshaling response").Error(), http.StatusInternalServerError)
 		return
 	}
 	_, err = w.Write(data)
 	if err != nil {
-		http.Error(w, "Error writing data", http.StatusInternalServerError)
+		http.Error(w, errors.Wrap(err, "error writing data").Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -36,13 +38,13 @@ func HandleResponseError(w http.ResponseWriter, msg string, statusCode int) {
 	c := FormatResponse{Error: msg}
 	data, err := json.Marshal(&c)
 	if err != nil {
-		http.Error(w, "Error marshaling response", http.StatusInternalServerError)
+		http.Error(w, errors.Wrap(err, "error marshaling response").Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(statusCode)
 	_, err = w.Write(data)
 	if err != nil {
-		http.Error(w, "Error writing data", http.StatusInternalServerError)
+		http.Error(w, errors.Wrap(err, "error writing data").Error(), http.StatusInternalServerError)
 		return
 	}
 }
