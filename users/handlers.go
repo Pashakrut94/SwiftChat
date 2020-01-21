@@ -4,47 +4,25 @@ import (
 	"net/http"
 
 	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 
-	"encoding/json"
-	"io/ioutil"
 	"strconv"
 
 	"github.com/Pashakrut94/SwiftChat/handlers"
 	"github.com/gorilla/mux"
 )
 
-func CreateUser(repo UserRepo) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			handlers.HandleResponseError(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		}
-		var user User
-		if err := json.Unmarshal(body, &user); err != nil {
-			handlers.HandleResponseError(w, "Error unmarshaling request body", http.StatusInternalServerError)
-			return
-		}
-		if err := repo.Create(&user); err != nil {
-			handlers.HandleResponseError(w, "Error creating new user", http.StatusBadRequest)
-			return
-		}
-		_, pretty := r.URL.Query()["pretty"]
-		handlers.HandleResponse(w, user, pretty)
-	}
-}
-
 func GetUser(repo UserRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		userID, err := strconv.Atoi(vars["UserID"])
 		if err != nil {
-			handlers.HandleResponseError(w, "Incorrect enter of UserID", http.StatusBadRequest)
+			handlers.HandleResponseError(w, errors.Wrap(err, "incorrect enter of userID").Error(), http.StatusBadRequest)
 			return
 		}
-		user, err := repo.Get(userID)
+		user, err := HandleGetUSer(repo, userID)
 		if err != nil {
-			handlers.HandleResponseError(w, "Error getting user by ID", http.StatusBadRequest)
+			handlers.HandleResponseError(w, errors.Wrap(err, err.Error()).Error(), http.StatusBadRequest)
 			return
 		}
 		_, pretty := r.URL.Query()["pretty"]
@@ -54,9 +32,9 @@ func GetUser(repo UserRepo) http.HandlerFunc {
 
 func ListUsers(repo UserRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		allUsers, err := repo.List()
+		allUsers, err := HandleListUSer(repo)
 		if err != nil {
-			handlers.HandleResponseError(w, "Error listing of users", http.StatusInternalServerError)
+			handlers.HandleResponseError(w, errors.Wrap(err, err.Error()).Error(), http.StatusInternalServerError)
 			return
 		}
 		_, pretty := r.URL.Query()["pretty"]

@@ -39,15 +39,14 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/signup", auth.SignUp(*userRepo, *sessRepo)).Methods("POST")
-	router.HandleFunc("/api/signin", auth.SignIn(*userRepo, *sessRepo)).Methods("POST")
+	router.HandleFunc("/api/signup", auth.SignUp(userRepo, *sessRepo)).Methods("POST")
+	router.HandleFunc("/api/signin", auth.SignIn(userRepo, *sessRepo)).Methods("POST")
 	router.HandleFunc("/api/logout", auth.Logout(*userRepo, *sessRepo)).Methods("POST")
 
 	router.Handle("/api/rooms", authMiddleware(chat.CreateRoom(*roomRepo))).Methods("POST")
 	router.Handle("/api/rooms", authMiddleware(chat.ListRooms(*roomRepo))).Methods("GET")
 	router.Handle("/api/rooms/{RoomID:[0-9]+}", authMiddleware(chat.GetRoom(*roomRepo))).Methods("GET")
 
-	router.Handle("/api/users", authMiddleware(users.CreateUser(*userRepo))).Methods("POST")
 	router.Handle("/api/users", authMiddleware(users.ListUsers(*userRepo))).Methods("GET")
 	router.Handle("/api/users/{UserID:[0-9]+}", authMiddleware(users.GetUser(*userRepo))).Methods("GET")
 

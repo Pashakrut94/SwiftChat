@@ -2,7 +2,6 @@ package chat
 
 import (
 	"database/sql"
-	"fmt"
 )
 
 type MsgRepo struct {
@@ -63,6 +62,9 @@ func (repo *RoomRepo) Create(room *Room) error {
 func (repo *RoomRepo) List() ([]Room, error) {
 	q := "select id , name from rooms"
 	rows, err := repo.db.Query(q)
+	if err == sql.ErrNoRows {
+		return []Room{}, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +74,6 @@ func (repo *RoomRepo) List() ([]Room, error) {
 		var room Room
 		err := rows.Scan(&room.ID, &room.Name)
 		if err != nil {
-			fmt.Println(err)
 			continue
 		}
 		rooms = append(rooms, room)
@@ -84,6 +85,9 @@ func (repo *RoomRepo) Get(id int) (*Room, error) {
 	row := repo.db.QueryRow("select id , name from rooms where id = $1", id)
 	var room Room
 	err := row.Scan(&room.ID, &room.Name)
+	if err == sql.ErrNoRows {
+		return nil, err
+	}
 	if err != nil {
 		return nil, err
 	}
