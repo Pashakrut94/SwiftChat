@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"database/sql"
 	"encoding/json"
+	"text/template"
 
 	"net/http"
 	"time"
@@ -11,24 +13,69 @@ import (
 	"github.com/pkg/errors"
 )
 
+func SignUpTemplate() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		_, err := r.Cookie(sessionName)
+		if err == nil {
+			http.Redirect(w, r, "/api/hellopage", http.StatusTemporaryRedirect)
+		}
+		t, err := template.ParseFiles("./auth/templates/signup.gtpl")
+		if err != nil {
+			handlers.HandleResponseError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		t.Execute(w, nil)
+	}
+}
+
 type SignUpRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Phone    string `json:"phone"`
 }
 
+func FormParseSignUp(r *http.Request) (*SignUpRequest, error) {
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+	name := r.FormValue("username")
+	password := r.FormValue("password")
+	phone := r.FormValue("phone")
+	req := SignUpRequest{Username: name, Password: password, Phone: phone}
+	return &req, nil
+}
+
+func CheckCookies(userRepo *users.UserRepo, w http.ResponseWriter, r *http.Request, phone string) error {
+	_, err := r.Cookie(sessionName)
+	if err == nil {
+		http.Redirect(w, r, "/api/hellopage", http.StatusTemporaryRedirect)
+		return nil
+	} else {
+		_, err := userRepo.GetByPhone(phone)
+		switch err {
+		case nil:
+			return errors.New("user already exists")
+		case sql.ErrNoRows:
+			return nil
+		default:
+			return err
+		}
+	}
+}
+
 func SignUp(userRepo *users.UserRepo, sessRepo SessionRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, err := r.Cookie(sessionName)
-		if err == nil {
-			handlers.HandleResponseError(w, errors.Wrap(err, "this user already has a session").Error(), http.StatusInternalServerError)
+		req, err := FormParseSignUp(r)
+		if err != nil {
+			handlers.HandleResponseError(w, errors.Wrap(err, "error parsing template").Error(), http.StatusInternalServerError)
 			return
 		}
-		var req SignUpRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			handlers.HandleResponseError(w, errors.Wrap(err, "error parsing signup request").Error(), http.StatusBadRequest)
-			return
-		}
+
+		// if err := CheckCookies(userRepo, w, r, req.Phone); err != nil {
+		// 	handlers.HandleResponseError(w, err.Error(), http.StatusBadGateway) // another http Error
+		// 	return
+		// }
+
 		user, err := HandleSignUp(userRepo, req.Username, req.Password, req.Phone)
 		if err != nil {
 			switch errors.Cause(err) {
@@ -59,7 +106,7 @@ type SignInRequest struct {
 func SignIn(userRepo *users.UserRepo, sessRepo SessionRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, err := r.Cookie(sessionName)
-		if err == nil {
+		if err == nil { //if session exists redirect to main page on form method "get" do it
 			handlers.HandleResponseError(w, errors.Wrap(err, "this user already has a session").Error(), http.StatusInternalServerError)
 			return
 		}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Pashakrut94/SwiftChat/auth"
 	"github.com/Pashakrut94/SwiftChat/chat"
+	"github.com/Pashakrut94/SwiftChat/image"
 	"github.com/Pashakrut94/SwiftChat/users"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -39,6 +40,10 @@ func main() {
 
 	router := mux.NewRouter()
 
+	router.HandleFunc("/hello", helloHandler()).Methods("GET")
+
+	router.HandleFunc("/api/signup", auth.SignUpTemplate()).Methods("GET")
+
 	router.HandleFunc("/api/signup", auth.SignUp(userRepo, *sessRepo)).Methods("POST")
 	router.HandleFunc("/api/signin", auth.SignIn(userRepo, *sessRepo)).Methods("POST")
 	router.HandleFunc("/api/logout", auth.Logout(*userRepo, *sessRepo)).Methods("POST")
@@ -53,7 +58,18 @@ func main() {
 	router.Handle("/api/rooms/{RoomID:[0-9]+}/messages", authMiddleware(chat.CreateMessage(*msgRepo))).Methods("POST")
 	router.Handle("/api/rooms/{RoomID:[0-9]+}/messages", authMiddleware(chat.ListMessages(*msgRepo))).Methods("GET")
 
+	router.Handle("/api/upload", authMiddleware(image.Upload(*userRepo))).Methods("POST")
+	router.Handle("/api/upload", authMiddleware(image.UploadTemplate())).Methods("GET")
+
+	router.Handle("/api/hellopage", authMiddleware(helloHandler()))
+
 	http.Handle("/", router)
 	fmt.Println("Server starts at :8080")
 	http.ListenAndServe(":8080", nil)
+}
+
+func helloHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Andrey Nadezhkin")
+	}
 }

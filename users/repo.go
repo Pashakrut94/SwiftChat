@@ -19,9 +19,11 @@ func (repo *UserRepo) get(q string, args ...interface{}) (*User, error) {
 		&u.ID,
 		&u.Name,
 		&u.Phone,
-		&u.Password); err != nil {
+		&u.Password,
+		&u.Avatar); err != nil {
 		return nil, err
 	}
+
 	return &u, nil
 }
 
@@ -41,8 +43,10 @@ func (repo *UserRepo) List() ([]User, error) {
 	defer rows.Close()
 	users := []User{}
 	for rows.Next() {
+
 		user := User{}
-		err := rows.Scan(&user.ID, &user.Name, &user.Phone, &user.Password)
+
+		err := rows.Scan(&user.ID, &user.Name, &user.Phone, &user.Password, &user.Avatar) //&user.Avatar add
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -53,7 +57,17 @@ func (repo *UserRepo) List() ([]User, error) {
 }
 
 func (repo *UserRepo) Create(user *User) error {
-	err := repo.db.QueryRow("insert into users (name, phone, password) values ($1,$2,$3) returning id", user.Name, user.Phone, user.Password).Scan(&user.ID)
+	q := "insert into users (name, phone, password) values ($1,$2,$3) returning id"
+	err := repo.db.QueryRow(q, user.Name, user.Phone, user.Password).Scan(&user.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (repo *UserRepo) UpdateAvatarURL(URL string, userID int) error {
+	q := "update users set url = $1 where id = $2"
+	_, err := repo.db.Exec(q, URL, userID)
 	if err != nil {
 		return err
 	}

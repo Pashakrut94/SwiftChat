@@ -3,6 +3,7 @@ module github.com/Pashakrut94/SwiftChat
 go 1.13
 
 require (
+	github.com/aws/aws-sdk-go v1.28.9
 	github.com/go-pg/migrations/v7 v7.1.9 // indirect
 	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/golang-migrate/migrate/v4 v4.7.1
